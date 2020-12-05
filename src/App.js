@@ -10,17 +10,46 @@ class App extends React.Component {
         apps: [],
         search: '',
         sort: '',
+        genre: '',
         error: null,
       }
     }
-
     handleSubmit(e) {
-      e.preventDefault()
-      console.log("handle submit clicked!")
-    }
+      e.preventDefault();
+      let baseUrl = "http://localhost:8000/apps";
+      let search = `?search=${this.state.search}&sort=${this.state.sort}&genre=${this.state.genre}`;
+      const url = baseUrl+search;
+      fetch(url)
+        .then(res => {
+          if(!res.ok) {
+            throw new Error(res.statusText)
+          }
+          return res.json()
+        })
+        .then(data => {
+          this.setState({
+            apps: data,
+            error: null
+          })
+        })
+        .catch(error => {
+          this.setState({
+            error: 'There was a problem getting your data!'
+          });
+        });
+
+      this.setState({
+        search: '',
+        sort: '',
+      });
+    };
 
     render(props) {
+      const genreArr=["",'Action', 'Puzzle', 'Strategy', 'Casual', 'Arcade', 'Card'];
       console.log(this.state)
+      const apps = this.state.apps.map((app, idx) => {
+        return <ReturnedApps {...app} key={idx}/>
+      })
       return (
         <div className="App">
           <form>
@@ -40,11 +69,22 @@ class App extends React.Component {
                 <option value="Rating">Rating</option>
                 <option value="App">App</option>
               </select>
+              <label htmlFor="genre">Genre:</label>
+              <select id="genre" name="genre" onChange={e => this.setState({genre: e.target.value})}>
+                { 
+                  genreArr.map((genre, idx) => {
+                    return(
+                      <option key={idx} value={genre}>{genre}</option>
+                    )
+                  })
+                }
+              </select>
             </fieldset>
             <button type="submit" onClick={e => this.handleSubmit(e)}>Submit</button>
           </form>
+          <section className="app-error">{this.state.error}</section>
           <section>
-            <ReturnedApps {...props}/>
+            {apps}
           </section>
         </div>
       );
